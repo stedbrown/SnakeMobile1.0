@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Snake</title>
+  <style>
+    /* Add some basic styling for the game */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    /* Add a start screen */
+    .start-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+      font-size: 24px;
+    }
+    .start-screen h1 {
+      margin-bottom: 20px;
+    }
+    .start-screen button {
+      padding: 10px 20px;
+      border: none;
+      background-color: white;
+      color: black;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    /* Add a score display */
+    .score {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.5);
+      color: black;
+      font-size: 16px;
+    }
+    /* Add a game over screen */
+    .game-over-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+      font-size: 24px;
+    }
+    .game-over-screen h1 {
+      margin-bottom: 20px;
+    }
+    .game-over-screen button {
+      padding: 10px 20px;
+      border: none;
+      background-color: white;
+      color: black;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Add a canvas element to draw the game on -->
+  <canvas id="game"></canvas>
+  <!-- Add a start screen -->
+  <div class="start-screen">
+    <h1>Snake</h1>
+    <button id="start-button">Start Game</button>
+  </div>
+  <!-- Add a score display -->
+  <div class="score">
+    Score: <span id="score">0</span>
+  </div>
+  <script>
+    // Set up some variables to use in the game
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let snake = [];
+    let direction = 'right';
+    let food = {};
+    let score = 0;
+    let speed = 100; // The lower the value, the faster the snake moves
+    let gameOver = false;
+    let gameLoopInterval;
+    
+    // Set the canvas dimensions to match the window
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Set up the game loop
+    function gameLoop() {
+      gameLoopInterval = setTimeout(gameLoop, speed);
+      
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Move the snake in the current direction
+      moveSnake();
+      
+      // Draw the snake and the food
+      drawSnake();
+      drawFood();
+      
+      // Check for game over conditions
+      if (checkGameOver()) {
+        gameOver = true;
+        clearInterval(gameLoopInterval);
+        showGameOverScreen();
+      }
+    }
+    
+    // Function to move the snake in the current direction
+    function moveSnake() {
+      // Get the current position of the snake's head
+      let x = snake[0].x;
+      let y = snake[0].y;
+      
+      // Update the position based on the current direction
+      if (direction === 'right') x++;
+      if (direction === 'left') x--;
+      if (direction === 'up') y--;
+      if (direction === 'down') y++;
+      
+      // Check if the snake has eaten the food
+      if (x === food.x && y === food.y) {
+        // Increase the score and generate new food
+        score++;
+        document.getElementById('score').textContent = score;
+        generateFood();
+      } else {
+        // Remove the tail of the snake
+        let tail = snake.pop();
+      }
+      
+      // Add a new head in the updated position
+      snake.unshift({ x, y });
+    }
+    
+    // Function to draw the snake on the canvas
+    function drawSnake() {
+      for (let i = 0; i < snake.length; i++) {
+        // Set the color of the snake based on its position
+        if (i === 0) {
+          ctx.fillStyle = 'black';
+        } else {
+          ctx.fillStyle = 'green';
+        }
+        
+        // Draw a rectangle for each segment of the snake
+        ctx.fillRect(snake[i].x * 20, snake[i].y * 20, 20, 20);
+      }
+    }
+    
+    // Function to draw the food on the canvas
+    function drawFood() {
+      ctx.fillStyle = 'red';
+      ctx.fillRect(food.x * 20, food.y * 20, 20, 20);
+    }
+    
+    // Function to check for game over conditions
+    function checkGameOver() {
+      // Check if the snake has collided with a wall
+      if (snake[0].x < 0 || snake[0].x >= canvas.width / 20 || snake[0].y < 0 || snake[0].y >= canvas.height / 20) {
+        return true;
+      }
+ // Check if the snake has collided with itself
+ for (let i = 1; i < snake.length; i++) {
+        if (snake[0].x === snake[i].x && snake[0].y === snake[i].y) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
+    // Function to show the game over screen
+    function showGameOverScreen() {
+      const gameOverScreen = document.createElement('div');
+      gameOverScreen.classList.add('game-over-screen');
+      gameOverScreen.innerHTML = `
+        <h1>Game Over</h1>
+        <p>Your score: ${score}</p>
+        <button id="restart-button">Restart</button>
+      `;
+      document.body.appendChild(gameOverScreen);
+      
+      // Add an event listener to the restart button
+      document.getElementById('restart-button').addEventListener('click', restartGame);
+    }
+    
+    // Function to generate a new food item
+    function generateFood() {
+      // Generate random coordinates for the food
+      food.x = Math.floor(Math.random() * (canvas.width / 20));
+      food.y = Math.floor(Math.random() * (canvas.height / 20));
+      
+      // Check if the food is on top of the snake
+      for (let i = 0; i < snake.length; i++) {
+        if (food.x === snake[i].x && food[1].y === snake[i].y) {
+          // If it is, generate new coordinates
+          generateFood();
+          return;
+        }
+      }
+    }
+    
+    // Function to restart the game
+    function restartGame() {
+      // Remove the game over screen
+      document.querySelector('.game-over-screen').remove();
+      
+      // Reset the game variables
+      snake = [];
+      direction = 'right';
+      food = {};
+      score = 0;
+      document.getElementById('score').textContent = score;
+      gameOver = false;
+      
+      // Start the game loop
+      gameLoop();
+    }
+    
+    // Set up the start button event listener
+    document.getElementById('start-button').addEventListener('click', startGame);
+    
+    // Set up the keyboard event listeners to control the snake
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' && direction !== 'left') {
+        direction = 'right';
+      } else if (e.key === 'ArrowLeft' && direction !== 'right') {
+        direction = 'left';
+      } else if (e.key === 'ArrowUp' && direction !== 'down') {
+        direction = 'up';
+      } else if (e.key === 'ArrowDown' && direction !== 'up') {
+        direction = 'down';
+      }
+    });
+    
+    // Function to start the game
+    function startGame() {
+      // Hide the start screen
+      document.querySelector('.start-screen').style.display = 'none';
+      
+      // Initialize the snake and the food
+      snake = [{ x: 10, y: 10 }];
+      generateFood();
+      
+      // Start the game loop
+      gameLoop();
+    }
+  </script>
+</body>
+</html>
